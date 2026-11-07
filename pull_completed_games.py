@@ -1,4 +1,4 @@
-"""Pull completed MLB games from the MLB Stats API through 2026-09-30.
+"""Pull completed MLB games from the MLB Stats API through 2026-11-07.
 
 Appends one row per team to data/2026/teams. Scores, the sixth-inning
 line, and starter names come from the schedule, linescore, and boxscore.
@@ -18,7 +18,7 @@ import statsapi
 
 ROOT = Path(__file__).resolve().parent
 YEAR = 2026
-THROUGH = "2026-09-30"
+THROUGH = "2026-11-07"
 START = "2026-03-25"
 COMPLETED = {"Final", "Game Over", "Completed Early"}
 GAME_TYPES = {"R", "F", "D", "L", "W"}
