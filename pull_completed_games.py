@@ -1,4 +1,4 @@
-"""Pull completed MLB games from the MLB Stats API through 2026-11-07.
+"""Pull completed MLB games from the MLB Stats API through today.
 
 Appends one row per team to data/2026/teams. Scores, the sixth-inning
 line, and starter names come from the schedule, linescore, and boxscore.
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import csv
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -18,7 +18,7 @@ import statsapi
 
 ROOT = Path(__file__).resolve().parent
 YEAR = 2026
-THROUGH = "2026-11-07"
+THROUGH = date.today().isoformat()
 START = "2026-03-25"
 COMPLETED = {"Final", "Game Over", "Completed Early"}
 GAME_TYPES = {"R", "F", "D", "L", "W"}
@@ -230,8 +230,30 @@ def main() -> None:
         frame = pd.read_csv(path)
         if not frame.empty:
             dates.extend(frame["date"].tolist())
-    print(f"team file min {min(dates)}")
-    print(f"team file max {max(dates)}")
+    team_min = min(dates) if dates else ""
+    team_max = max(dates) if dates else ""
+    print(f"team file min {team_min}")
+    print(f"team file max {team_max}")
+    notes = ROOT / "NOTES.md"
+    notes.write_text(
+        "This repo predicts the next two weeks of MLB win-loss outcomes from each team's run differential.\n\n"
+        "Completed games come from the MLB Stats API. "
+        f"data/2026/completed_games.csv has {len(schedule)} finals from {schedule['date'].min()} through {schedule['date'].max()}. "
+        f"The schedule was checked through {THROUGH}. "
+        f"Team files in data/2026/teams run from {team_min} through {team_max}. "
+        f"New team rows added on this run: {added}. "
+        f"Games skipped for a missing line, starter, or unknown team: {skipped}. "
+        "DraftKings was not called. The daily outcome script was not run. This does not price a bet.\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    script = ROOT / "scripts" / "validate_scores.py"
+    if script.exists():
+        import subprocess
+        import sys
+        result = subprocess.run([sys.executable, str(script)], cwd=ROOT, check=False)
+        if result.returncode != 0:
+            raise SystemExit(result.returncode)
 
 
 if __name__ == "__main__":
